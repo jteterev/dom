@@ -124,16 +124,10 @@
       const index = commentElement.dataset.index;
       const comment = comments[index];
       
-      const textForQuote = comment.text.replace(/&gt;/g, '>');
-      const quotedText = `> ${textForQuote.replace(/\n/g, '\n> ')}`;
+      const quotedText = `> ${comment.text.replace(/\n/g, '\n> ')}`;
       
       if (!nameInput.value.trim()) {
-        nameInput.value = comment.name
-          .replace(/&gt;/g, '>')
-          .replace(/&lt;/g, '<')
-          .replace(/&amp;/g, '&')
-          .replace(/&quot;/g, '"')
-          .replace(/&#039;/g, "'");
+        nameInput.value = comment.name;
       }
 
       if (textInput.value.trim()) {
@@ -166,15 +160,6 @@
       console.log('Лайк обновлен:', comments[index]);
     }
     
-    function sanitizeInput(input) {
-      return input
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-    
     addButton.addEventListener('click', function() {
       const rawName = nameInput.value.trim();
       const rawText = textInput.value.trim();
@@ -184,22 +169,10 @@
         return;
       }
       
-      const safeName = rawName
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-      
-      const safeText = rawText
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-      
       comments.push({
-        name: safeName,
+        name: rawName,
         date: getCurrentDateTime(),
-        text: safeText,
+        text: rawText,
         likes: 0,
         isLiked: false
       });
@@ -213,11 +186,11 @@
     });
     
     nameInput.addEventListener('input', function() {
-      console.log('Имя изменено (безопасное):', sanitizeInput(nameInput.value));
+      console.log('Имя изменено:', nameInput.value);
     });
     
     textInput.addEventListener('input', function() {
-      console.log('Текст комментария изменен (безопасный):', sanitizeInput(textInput.value));
+      console.log('Текст комментария изменен:', textInput.value);
     });
     
     renderComments();
