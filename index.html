@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <title>Проект "Комменты"</title>
@@ -8,8 +8,7 @@
 
   <body>
     <div class="container">
-      <ul class="comments">        
-      </ul>
+      <ul class="comments"></ul>
       <div class="add-form">
         <input
           type="text"
@@ -19,7 +18,7 @@
         <textarea
           type="textarea"
           class="add-form-text"
-          placeholder="Введите ваш коментарий"
+          placeholder="Введите ваш комментарий"
           rows="4"
         ></textarea>
         <div class="add-form-row">
@@ -27,174 +26,7 @@
         </div>
       </div>
     </div>
+
+    <script type="module" src="js/main.js"></script>
   </body>
-
-  <script>
-  "use strict";
-    
-    let comments = [
-      {
-        name: 'Глеб Фокин',
-        date: '12.02.22 12:18',
-        text: 'Это будет первый комментарий на этой странице',
-        likes: 3,
-        isLiked: false
-      },
-      {
-        name: 'Варвара Н.',
-        date: '13.02.22 19:22',
-        text: 'Мне нравится как оформлена эта страница! ❤',
-        likes: 75,
-        isLiked: true
-      }
-    ];
-    
-    const commentsList = document.querySelector('.comments');
-    const nameInput = document.querySelector('.add-form-name');
-    const textInput = document.querySelector('.add-form-text');
-    const addButton = document.querySelector('.add-form-button');
-    
-    function getCurrentDateTime() {
-      const now = new Date();
-      const day = String(now.getDate()).padStart(2, '0');
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const year = String(now.getFullYear()).slice(2);
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      return `${day}.${month}.${year} ${hours}:${minutes}`;
-    }
-    
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-    
-    function renderComments() {
-      let commentsHtml = '';
-      
-      comments.forEach((comment, index) => {
-        const escapedName = escapeHtml(comment.name);
-        const escapedText = escapeHtml(comment.text);
-        
-        const likeButtonClass = comment.isLiked 
-          ? 'like-button -active-like' 
-          : 'like-button';
-        
-        commentsHtml += `
-          <li class="comment" data-index="${index}">
-            <div class="comment-header">
-              <div>${escapedName}</div>
-              <div>${comment.date}</div>
-            </div>
-            <div class="comment-body">
-              <div class="comment-text">
-                ${escapedText}
-              </div>
-            </div>
-            <div class="comment-footer">
-              <div class="likes">
-                <span class="likes-counter">${comment.likes}</span>
-                <button class="${likeButtonClass}" data-index="${index}"></button>
-              </div>
-            </div>
-          </li>
-        `;
-      });
-      
-      commentsList.innerHTML = commentsHtml;
-      
-      document.querySelectorAll('.like-button').forEach(button => {
-        button.addEventListener('click', handleLikeClick);
-      });
-      
-      document.querySelectorAll('.comment').forEach(comment => {
-        comment.addEventListener('click', handleCommentClick);
-      });
-    }
-    
-    function handleCommentClick(event) {
-      if (event.target.classList.contains('like-button') || 
-          event.target.classList.contains('likes-counter') ||
-          event.target.closest('.likes')) {
-        return;
-      }
-    
-      const commentElement = event.currentTarget;
-      const index = commentElement.dataset.index;
-      const comment = comments[index];
-      
-      const quotedText = `> ${comment.text.replace(/\n/g, '\n> ')}`;
-      
-      if (!nameInput.value.trim()) {
-        nameInput.value = comment.name;
-      }
-
-      if (textInput.value.trim()) {
-        textInput.value = textInput.value + '\n\n' + quotedText;
-      } else {
-        textInput.value = quotedText;
-      }
-      
-      textInput.focus();
-      
-      console.log('Цитируется комментарий:', comment);
-    }
-    
-    function handleLikeClick(event) {
-      event.stopPropagation();
-      
-      const button = event.currentTarget;
-      const index = button.dataset.index;
-      
-      if (comments[index].isLiked) {
-        comments[index].isLiked = false;
-        comments[index].likes -= 1;
-      } else {
-        comments[index].isLiked = true;
-        comments[index].likes += 1;
-      }
-      
-      renderComments();
-      
-      console.log('Лайк обновлен:', comments[index]);
-    }
-    
-    addButton.addEventListener('click', function() {
-      const rawName = nameInput.value.trim();
-      const rawText = textInput.value.trim();
-      
-      if (!rawName || !rawText) {
-        alert('Пожалуйста, заполните имя и комментарий');
-        return;
-      }
-      
-      comments.push({
-        name: rawName,
-        date: getCurrentDateTime(),
-        text: rawText,
-        likes: 0,
-        isLiked: false
-      });
-      
-      nameInput.value = '';
-      textInput.value = '';
-      
-      renderComments();
-      
-      console.log('Новый комментарий добавлен');
-    });
-    
-    nameInput.addEventListener('input', function() {
-      console.log('Имя изменено:', nameInput.value);
-    });
-    
-    textInput.addEventListener('input', function() {
-      console.log('Текст комментария изменен:', textInput.value);
-    });
-    
-    renderComments();
-    
-    console.log("It works!");
-  </script>
 </html>
