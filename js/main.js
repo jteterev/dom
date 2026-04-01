@@ -1,9 +1,9 @@
-import { renderComments } from "./render.js";
-import { initAddButtonHandler, initInputHandlers } from "./eventHandlers.js";
+import { renderComments } from './render.js';
+import { initAddButtonHandler, initInputHandlers, loadCommentsFromApi } from './eventHandlers.js';
 
 initAddButtonHandler();
 initInputHandlers();
 
-renderComments();
+loadCommentsFromApi();
 
 console.log("It works!");
