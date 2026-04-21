@@ -96,6 +96,12 @@ body {
   margin-top: 48px;
   display: flex;
   flex-direction: column;
+  transition: opacity 0.3s ease;
+}
+
+.add-form.form-sending {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .add-form-name,
@@ -134,6 +140,11 @@ body {
 
 .add-form-button:hover {
   opacity: 0.9;
+}
+
+.add-form-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .loading {
@@ -184,4 +195,48 @@ body {
 .add-form-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.sending-loader {
+  text-align: center;
+  padding: 20px;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.sending-loader .loading-spinner {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.error {
+  text-align: center;
+  padding: 20px;
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+  color: #c33;
+  margin: 20px 0;
+}
+
+.empty {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+  font-style: italic;
 }

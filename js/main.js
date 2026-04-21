@@ -1,9 +1,11 @@
-import { renderComments } from './render.js';
-import { initAddButtonHandler, initInputHandlers, loadCommentsFromApi } from './eventHandlers.js';
+import { renderComments } from "./render.js";
+import { initEventHandlers, loadCommentsFromApi } from "./eventHandlers.js";
+import { restoreFormState } from "./formState.js";
 
-initAddButtonHandler();
-initInputHandlers();
+initEventHandlers();
 
-loadCommentsFromApi();
+loadCommentsFromApi().then(() => {
+  restoreFormState();
+});
 
 console.log("It works!");
