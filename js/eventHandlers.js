@@ -1,11 +1,16 @@
-import { comments, setComments, addCommentToStore } from "./commentsData.js";
-import { renderComments, showError, showLoading } from "./render.js";
+import { comments, setComments } from "./commentsData.js";
+import {
+  renderComments,
+  showError,
+  showLoading,
+  showSendingLoader,
+  hideSendingLoader,
+} from "./render.js";
 import { addComment, transformComment, fetchComments } from "./api.js";
 
 const nameInput = document.querySelector(".add-form-name");
 const textInput = document.querySelector(".add-form-text");
 const addButton = document.querySelector(".add-form-button");
-const addForm = document.querySelector(".add-form");
 
 export function handleCommentClick(event) {
   if (
@@ -34,7 +39,6 @@ export function handleCommentClick(event) {
     }
 
     textInput.focus();
-    console.log("Цитируется комментарий:", comment);
   }
 }
 
@@ -54,40 +58,29 @@ export function handleLikeClick(event) {
       comment.likes += 1;
     }
     renderComments();
-    console.log("Лайк обновлен локально:", comment);
   }
 }
 
-function setFormDisabled(disabled) {
-  if (nameInput) nameInput.disabled = disabled;
-  if (textInput) textInput.disabled = disabled;
-  if (addButton) addButton.disabled = disabled;
+export function loadCommentsFromApi() {
+  showLoading();
 
-  if (disabled) {
-    addForm?.classList.add("form-disabled");
-  } else {
-    addForm?.classList.remove("form-disabled");
-  }
-}
-
-export async function loadCommentsFromApi() {
-  try {
-    showLoading();
-    const apiComments = await fetchComments();
-    const transformedComments = apiComments.map(transformComment);
-    setComments(transformedComments);
-    renderComments();
-  } catch (error) {
-    console.error("Ошибка загрузки:", error);
-    showError(
-      "Не удалось загрузить комментарии. Проверьте соединение с интернетом.",
-    );
-  }
+  return fetchComments()
+    .then((apiComments) => {
+      const transformedComments = apiComments.map(transformComment);
+      setComments(transformedComments);
+      renderComments();
+    })
+    .catch((error) => {
+      console.error("Ошибка загрузки:", error);
+      showError(
+        "Не удалось загрузить комментарии. Проверьте соединение с интернетом.",
+      );
+    });
 }
 
 export function initAddButtonHandler() {
   if (addButton) {
-    addButton.addEventListener("click", async () => {
+    addButton.addEventListener("click", () => {
       const rawName = nameInput.value.trim();
       const rawText = textInput.value.trim();
 
@@ -106,28 +99,30 @@ export function initAddButtonHandler() {
         return;
       }
 
-      try {
-        setFormDisabled(true);
+      showSendingLoader();
 
-        await addComment(rawName, rawText);
+      addComment(rawName, rawText)
+        .then(() => {
+          // Очищаем поля
+          nameInput.value = "";
+          textInput.value = "";
 
-        nameInput.value = "";
-        textInput.value = "";
+          return loadCommentsFromApi();
+        })
+        .catch((error) => {
+          console.error("Ошибка при добавлении комментария:", error);
 
-        await loadCommentsFromApi();
-      } catch (error) {
-        console.error("Ошибка при добавлении комментария:", error);
-
-        if (error.message.includes("3 символа")) {
-          alert(error.message);
-        } else if (error.message.includes("500")) {
-          alert("Сервер временно недоступен. Попробуйте позже.");
-        } else {
-          alert("Ошибка при отправке комментария. Попробуйте позже.");
-        }
-      } finally {
-        setFormDisabled(false);
-      }
+          if (error.message.includes("3 символа")) {
+            alert(error.message);
+          } else if (error.message.includes("500")) {
+            alert("Сервер временно недоступен. Попробуйте позже.");
+          } else {
+            alert("Ошибка при отправке комментария. Попробуйте позже.");
+          }
+        })
+        .finally(() => {
+          hideSendingLoader();
+        });
     });
   }
 }
