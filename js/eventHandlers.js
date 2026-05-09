@@ -7,10 +7,31 @@ import {
   hideSendingLoader,
 } from "./render.js";
 import { addComment, transformComment, fetchComments } from "./api.js";
+import {
+  saveFormState,
+  clearFormState,
+  restoreFormState,
+} from "./formState.js";
 
 const nameInput = document.querySelector(".add-form-name");
 const textInput = document.querySelector(".add-form-text");
 const addButton = document.querySelector(".add-form-button");
+
+let isSending = false;
+
+export function initFormTracking() {
+  if (nameInput) {
+    nameInput.addEventListener("input", () => {
+      saveFormState();
+    });
+  }
+
+  if (textInput) {
+    textInput.addEventListener("input", () => {
+      saveFormState();
+    });
+  }
+}
 
 export function handleCommentClick(event) {
   if (
@@ -38,6 +59,7 @@ export function handleCommentClick(event) {
       textInput.value = quotedText;
     }
 
+    saveFormState();
     textInput.focus();
   }
 }
@@ -72,15 +94,26 @@ export function loadCommentsFromApi() {
     })
     .catch((error) => {
       console.error("Ошибка загрузки:", error);
-      showError(
-        "Не удалось загрузить комментарии. Проверьте соединение с интернетом.",
-      );
+      let errorMessage = error.message || "Неизвестная ошибка";
+
+      if (errorMessage.includes("интернет") || errorMessage.includes("связь")) {
+        errorMessage =
+          "Нет соединения с интернетом. Пожалуйста, проверьте связь и обновите страницу.";
+      } else if (errorMessage.includes("500")) {
+        errorMessage = "Сервер временно недоступен. Попробуйте позже.";
+      }
+
+      showError(errorMessage);
     });
 }
 
 export function initAddButtonHandler() {
   if (addButton) {
     addButton.addEventListener("click", () => {
+      if (isSending) {
+        return;
+      }
+
       const rawName = nameInput.value.trim();
       const rawText = textInput.value.trim();
 
@@ -99,44 +132,44 @@ export function initAddButtonHandler() {
         return;
       }
 
+      isSending = true;
+      saveFormState();
       showSendingLoader();
 
       addComment(rawName, rawText)
         .then(() => {
-          // Очищаем поля
-          nameInput.value = "";
-          textInput.value = "";
-
+          clearFormState();
           return loadCommentsFromApi();
+        })
+        .then(() => {
+          hideSendingLoader();
+          isSending = false;
         })
         .catch((error) => {
           console.error("Ошибка при добавлении комментария:", error);
-
-          if (error.message.includes("3 символа")) {
-            alert(error.message);
-          } else if (error.message.includes("500")) {
-            alert("Сервер временно недоступен. Попробуйте позже.");
-          } else {
-            alert("Ошибка при отправке комментария. Попробуйте позже.");
-          }
-        })
-        .finally(() => {
           hideSendingLoader();
+          restoreFormState();
+          isSending = false;
+
+          if (error.type === "validation") {
+            alert(error.message);
+          } else if (error.type === "server") {
+            alert(
+              `${error.message}\n\nВаш комментарий не был отправлен. Попробуйте позже.`,
+            );
+          } else if (error.type === "network") {
+            alert(
+              `${error.message}\n\nВаш комментарий сохранен в форме. Попробуйте отправить снова.`,
+            );
+          } else {
+            alert(`Ошибка при отправке комментария. Попробуйте позже.`);
+          }
         });
     });
   }
 }
 
-export function initInputHandlers() {
-  if (nameInput) {
-    nameInput.addEventListener("input", () => {
-      console.log("Имя изменено:", nameInput.value);
-    });
-  }
-
-  if (textInput) {
-    textInput.addEventListener("input", () => {
-      console.log("Текст комментария изменен:", textInput.value);
-    });
-  }
+export function initEventHandlers() {
+  initFormTracking();
+  initAddButtonHandler();
 }

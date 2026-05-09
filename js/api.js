@@ -1,46 +1,78 @@
-const PERSONAL_KEY = "evgenii-teterev"; // Замените на свои имя и фамилию
+const PERSONAL_KEY = "evgenii-teterev";
 const BASE_URL = `https://wedev-api.sky.pro/api/v1/${PERSONAL_KEY}/comments`;
 
-export async function fetchComments() {
-  try {
-    const response = await fetch(BASE_URL);
-
-    if (!response.ok) {
-      throw new Error(`Ошибка загрузки: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.comments;
-  } catch (error) {
-    console.error("Ошибка при загрузке комментариев:", error);
-    throw error;
-  }
+export function fetchComments() {
+  return fetch(BASE_URL)
+    .then((response) => {
+      if (!response.ok) {
+        if (response.status === 500) {
+          throw new Error("Сервер временно недоступен. Попробуйте позже.");
+        }
+        throw new Error(`Ошибка загрузки: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then((data) => data.comments)
+    .catch((error) => {
+      if (
+        error.message.includes("fetch") ||
+        error.message.includes("network")
+      ) {
+        throw new Error("Проблема с интернет-соединением. Проверьте связь.");
+      }
+      throw error;
+    });
 }
 
-export async function addComment(name, text) {
-  try {
-    const response = await fetch(BASE_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        name: name,
-        text: text,
-      }),
-    });
+export function addComment(name, text, forceError = true) {
+  const body = {
+    name: name,
+    text: text,
+  };
 
-    if (response.status === 400) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Ошибка валидации");
-    }
-
-    if (!response.ok) {
-      throw new Error(`Ошибка отправки: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Ошибка при добавлении комментария:", error);
-    throw error;
+  if (forceError) {
+    body.forceError = true;
   }
+
+  return fetch(BASE_URL, {
+    method: "POST",
+    body: JSON.stringify(body),
+  })
+    .then((response) => {
+      if (response.status === 400) {
+        return response.json().then((errorData) => {
+          throw {
+            type: "validation",
+            message: errorData.error || "Ошибка валидации",
+          };
+        });
+      }
+      if (response.status === 500) {
+        throw {
+          type: "server",
+          message: "Сервер временно недоступен. Попробуйте позже.",
+        };
+      }
+      if (!response.ok) {
+        throw {
+          type: "unknown",
+          message: `Ошибка отправки: ${response.status}`,
+        };
+      }
+      return response.json();
+    })
+    .catch((error) => {
+      if (
+        error.message &&
+        (error.message.includes("fetch") || error.message.includes("network"))
+      ) {
+        throw {
+          type: "network",
+          message: "Проблема с интернет-соединением. Проверьте связь.",
+        };
+      }
+      throw error;
+    });
 }
 
 export function transformComment(apiComment) {

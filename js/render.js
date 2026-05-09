@@ -1,9 +1,10 @@
-import { comments } from "./commentsData.js";
-import { escapeHtml } from "./utils.js";
-import { handleLikeClick, handleCommentClick } from "./eventHandlers.js";
+import { comments } from './commentsData.js';
+import { escapeHtml } from './utils.js';
+import { handleLikeClick, handleCommentClick } from './eventHandlers.js';
+import { restoreFormState } from './formState.js';
 
 export function showLoading() {
-  const commentsList = document.querySelector(".comments");
+  const commentsList = document.querySelector('.comments');
   if (commentsList) {
     commentsList.innerHTML = `
       <div class="loading">
@@ -15,49 +16,60 @@ export function showLoading() {
 }
 
 export function showSendingLoader() {
-  const addButton = document.querySelector(".add-form-button");
+  const addForm = document.querySelector('.add-form');
+  const addButton = document.querySelector('.add-form-button');
+  
+  if (addForm) {
+    addForm.classList.add('form-sending');
+  }
+  
   if (addButton) {
-    addButton.textContent = "Отправка...";
     addButton.disabled = true;
+    addButton.textContent = 'Отправка...';
   }
 }
 
 export function hideSendingLoader() {
-  const addButton = document.querySelector(".add-form-button");
+  const addForm = document.querySelector('.add-form');
+  const addButton = document.querySelector('.add-form-button');
+  
+  if (addForm) {
+    addForm.classList.remove('form-sending');
+  }
+  
   if (addButton) {
-    addButton.textContent = "Написать";
     addButton.disabled = false;
+    addButton.textContent = 'Написать';
   }
 }
 
 export function showError(message) {
-  const commentsList = document.querySelector(".comments");
+  const commentsList = document.querySelector('.comments');
   if (commentsList) {
     commentsList.innerHTML = `<div class="error">❌ ${escapeHtml(message)}</div>`;
   }
 }
 
 export function renderComments() {
-  const commentsList = document.querySelector(".comments");
-
+  const commentsList = document.querySelector('.comments');
+  
   if (!commentsList) return;
-
+  
   if (!comments || comments.length === 0) {
-    commentsList.innerHTML =
-      '<div class="empty">Нет комментариев. Будьте первым!</div>';
+    commentsList.innerHTML = '<div class="empty">Нет комментариев. Будьте первым!</div>';
     return;
   }
-
-  let commentsHtml = "";
-
+  
+  let commentsHtml = '';
+  
   comments.forEach((comment, index) => {
     const escapedName = escapeHtml(comment.name);
     const escapedText = escapeHtml(comment.text);
-
-    const likeButtonClass = comment.isLiked
-      ? "like-button -active-like"
-      : "like-button";
-
+    
+    const likeButtonClass = comment.isLiked 
+      ? 'like-button -active-like' 
+      : 'like-button';
+    
     commentsHtml += `
       <li class="comment" data-id="${comment.id}" data-index="${index}">
         <div class="comment-header">
@@ -78,16 +90,18 @@ export function renderComments() {
       </li>
     `;
   });
-
+  
   commentsList.innerHTML = commentsHtml;
-
-  document.querySelectorAll(".like-button").forEach((button) => {
-    button.removeEventListener("click", handleLikeClick);
-    button.addEventListener("click", handleLikeClick);
+  
+  document.querySelectorAll('.like-button').forEach(button => {
+    button.removeEventListener('click', handleLikeClick);
+    button.addEventListener('click', handleLikeClick);
   });
-
-  document.querySelectorAll(".comment").forEach((comment) => {
-    comment.removeEventListener("click", handleCommentClick);
-    comment.addEventListener("click", handleCommentClick);
+  
+  document.querySelectorAll('.comment').forEach(comment => {
+    comment.removeEventListener('click', handleCommentClick);
+    comment.addEventListener('click', handleCommentClick);
   });
+  
+  restoreFormState();
 }
